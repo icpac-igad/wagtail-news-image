@@ -3,13 +3,13 @@ Register the image block with Wagtail.
 """
 import json
 
-from django.contrib.staticfiles.templatetags.staticfiles import static
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html_join
 from wagtail.admin.rich_text.editors.draftail.features import EntityFeature
 from wagtail.core import hooks
 
-from .rich_text import NewsImageEntityElementHandler, news_image_embedtype_handler, news_image_entity_decorator
+from .rich_text import (NewsImageEntityElementHandler, news_image_entity_decorator, NewsImageEmbedtypeHandler)
 
 
 @hooks.register('insert_editor_js')
@@ -50,7 +50,7 @@ def register_embed_features(features):
     }
 
     # Register embed
-    features.register_embed_type(block_name, news_image_embedtype_handler)
+    features.register_embed_type(NewsImageEmbedtypeHandler)
 
     # Register new editor feature with Draftail frontend
     features.register_editor_plugin('draftail', block_name, EntityFeature(feature_data))

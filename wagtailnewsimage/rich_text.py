@@ -9,6 +9,7 @@ from wagtail.admin.rich_text.converters.contentstate_models import Entity
 from wagtail.admin.rich_text.converters.html_to_contentstate import AtomicBlockEntityElementHandler
 from wagtail.images import formats, get_image_model
 from wagtail.images.formats import Format
+from wagtail.core.rich_text import EmbedHandler
 
 from .monkey_patch import get_rendition_or_not_found_patch
 
@@ -43,24 +44,33 @@ class NewsImageEntityElementHandler(AtomicBlockEntityElementHandler):
         })
 
 
-def news_image_embedtype_handler(attrs, images=[]):
-    """
-    Converts image embed from its database form into HTML for display in the front end.
-    You can insert `images` using a custom richtext template tag
-    """
-    attrs['alt'] = attrs.get('alt', '')
+class NewsImageEmbedtypeHandler(EmbedHandler):
+    identifier = 'news-image'
 
-    if attrs.get('title'):
-        title_html = '<figcaption>{}</figcaption>'.format(attrs['title'])
-    else:
-        title_html = ''
+    @staticmethod
+    def get_model():
+        return get_image_model()
 
-    image_html = image_embedtype_handler(attrs, images=images)
+    @classmethod
+    def expand_db_attributes(cls, attrs):
+        images = []
+        """
+        Converts image embed from its database form into HTML for display in the front end.
+        You can insert `images` using a custom richtext template tag
+        """
+        attrs['alt'] = attrs.get('alt', '')
 
-    if attrs.get('href'):
-        image_html = '<a href="{}">{}</a>'.format(attrs['href'], image_html)
+        if attrs.get('title'):
+            title_html = '<figcaption>{}</figcaption>'.format(attrs['title'])
+        else:
+            title_html = ''
 
-    return image_html + title_html
+        image_html = image_embedtype_handler(attrs, images=images)
+
+        if attrs.get('href'):
+            image_html = '<a href="{}">{}</a>'.format(attrs['href'], image_html)
+
+        return image_html + title_html
 
 
 # Monkey patch Wagtail's wagtail.images.shortcuts.get_rendition_or_not_found
@@ -107,7 +117,7 @@ def image_embedtype_handler(attrs, images=[]):
         filter_spec = 'width-{}'.format(width)
         image_format = Format(
             filter_spec=filter_spec,
-            classnames='richtext-image',
+            classnames='richtext-image news-image',
             # Unused required fields
             name='_',
             label='_',
